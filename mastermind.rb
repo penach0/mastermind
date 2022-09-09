@@ -18,6 +18,35 @@ module UserChecks
     end
     color[0].upcase
   end
+
+  def show_possible_colors(line)
+    keys = POSSIBLE_COLORS.keys
+    values = POSSIBLE_COLORS.values
+
+    case line
+    when 1
+      puts ' Possible colors:'
+    when (3..POSSIBLE_COLORS.length + 2)
+      puts " #{values[line - 3]} -> #{keys[line - 3].capitalize} "
+    else
+      puts ''
+    end
+  end
+
+  def show_board
+    line_template = '|. . | O  O  O  O | . .|'
+    lines = []
+
+    [*1..12].each do |line|
+      puts '|######################|' if line == 12
+      print line_template
+      show_possible_colors(line)
+      lines << [line_template]
+    end
+    puts ''
+
+    lines
+  end
 end
 
 class Sequence
@@ -25,13 +54,6 @@ class Sequence
   attr_reader :colors
 
   def initialize
-    puts 'Possible colors:'
-    POSSIBLE_COLORS.each do |key, value|
-      print "| #{value} -> #{key.capitalize} "
-      puts if key == :blue
-    end
-    puts
-
     @colors = []
     while @colors.length < 4
       print 'Pick a color: '
@@ -41,11 +63,15 @@ class Sequence
 end
 
 class Player
-
 end
 
 class Game
+  include UserChecks
+  attr_accessor :board, :lines
 
+  def initialize
+    @lines = show_board
+  end
 end
 
 class Code < Sequence
@@ -66,6 +92,6 @@ class Guess < Sequence
   end
 end
 
+game = Game.new
 
 code = Code.new
-puts code
