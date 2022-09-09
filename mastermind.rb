@@ -124,7 +124,10 @@ class CodeMaker < Player
   def initialize(type)
     @type = type
   end
-end
+
+  def create_code
+    @code = Code.new(self.type)
+  end
 
 class CodeBreaker < Player
   def initialize(type)
@@ -162,3 +165,4 @@ end
 
 game = Game.new
 player1 = Player.new
+code = Code.new(player1.type)
