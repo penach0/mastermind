@@ -32,12 +32,19 @@ module Input
     colors
   end
 
+  def check_values(value, condition)
+    return value if condition
+
+    puts 'That\'s not a valid option'
+    false
+  end
+
   def ask_type
     type = ''
     loop do
       puts 'Play vs Human or Computer?'
       type = gets.chomp
-      break if %w[human computer].include?(type.downcase)
+      break if check_values(type, %w[human computer].include?(type.downcase))
     end
     type
   end
@@ -47,12 +54,11 @@ module Input
     loop do
       puts 'Play as Codemaker or Codebreaker?'
       role = gets.chomp
-      break if %w[codemaker codebreaker].include?(role.downcase)
+      break if check_values(role, %w[codemaker codebreaker].include?(role.downcase))
     end
-      role
+    role
   end
 end
-
 
 module Output
   POSSIBLE_COLORS = { red: 'R', green: 'G', blue: 'B',
@@ -101,11 +107,28 @@ end
 class Player
   include Input
   MAX_PLAYERS = 2
-  attr_reader :type
+  attr_reader :type, :role
 
   def initialize
     @type = ask_type
     @role = ask_role
+    initialize_role
+  end
+
+  def initialize_role
+    role == 'codemaker' ? CodeMaker.new(type) : CodeBreaker.new(type)
+  end
+end
+
+class CodeMaker < Player
+  def initialize(type)
+    @type = type
+  end
+end
+
+class CodeBreaker < Player
+  def initialize(type)
+    @type = type
   end
 end
 
@@ -139,5 +162,3 @@ end
 
 game = Game.new
 player1 = Player.new
-puts player1.type.inspect
-code = Code.new(player1.type)
