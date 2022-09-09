@@ -28,17 +28,16 @@ class Sequence
     puts 'Possible colors:'
     POSSIBLE_COLORS.each do |key, value|
       print "| #{value} -> #{key.capitalize} "
+      puts if key == :blue
     end
+    puts
 
     @colors = []
     while @colors.length < 4
-      puts "\nPick a color:"
+      print 'Pick a color: '
       @colors << ask_colors
     end
-
-    puts @colors.inspect
   end
-
 end
 
 class Player
@@ -50,11 +49,23 @@ class Game
 end
 
 class Code < Sequence
-
+  def initialize
+    puts "************************\n"\
+         "*****PICK YOUR CODE*****\n"\
+         '************************'
+    super
+  end
 end
 
 class Guess < Sequence
-
+  def initialize
+    puts "*************************\n"\
+         "*****PICK YOUR GUESS*****\n"\
+         '*************************'
+    super
+  end
 end
 
-sequence = Sequence.new
+
+code = Code.new
+puts code
