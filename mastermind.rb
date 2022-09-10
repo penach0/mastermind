@@ -97,6 +97,12 @@ module Output
     end
   end
 
+  def sub_guesses(line, guess_array)
+    guess_array.each do |color|
+      line.sub!('O', color)
+    end
+    line
+  end
 end
 
 class Game
@@ -124,6 +130,15 @@ class Game
     lines.last.gsub!('O', '$')
     update_board(lines)
   end
+
+  def guessing
+    i = 0
+    while i < 12
+      sub_guesses(lines[i], breaker.make_guess.colors)
+      update_board(lines)
+      i += 1
+    end
+  end
 end
 
 class Player
@@ -144,8 +159,14 @@ class CodeMaker < Player
 end
 
 class CodeBreaker < Player
+  attr_reader :type
+
   def initialize(type)
     super
+  end
+
+  def make_guess
+    Guess.new(type)
   end
 end
 
@@ -172,14 +193,17 @@ class Code < Sequence
 end
 
 class Guess < Sequence
-  def initialize
+  def initialize(player_type)
+    if player_type == 'human'
     puts "*************************\n"\
          "*****PICK YOUR GUESS*****\n"\
          '*************************'
-    super
+    end
+    super(player_type)
   end
 end
 
 game = Game.new
 game.create_players
 game.set_code
+game.guessing
