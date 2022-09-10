@@ -66,12 +66,18 @@ module Output
   KEYS = POSSIBLE_COLORS.keys
   VALUES = POSSIBLE_COLORS.values
 
-  def show_possible_colors(line)
+  def show_info(line)
     case line
     when 1
       ' Possible colors:'
-    when (3..POSSIBLE_COLORS.length + 2)
+    when (3..8)
       " #{VALUES[line - 3]} -> #{KEYS[line - 3].capitalize} "
+    when 10
+      ' Feedback:'
+    when 11
+      ' * -> Correct in both color and position'
+    when 12
+      ' + -> Correct in color but wrong position'
     else
       ''
     end
@@ -82,7 +88,7 @@ module Output
     lines = []
 
     [*1..14].each do |line|
-      current_line =  line == 13 ? '|######################|' : line_template + show_possible_colors(line)
+      current_line =  line == 13 ? '|######################|' : line_template + show_info(line)
       puts current_line
       lines << current_line
     end
@@ -101,6 +107,21 @@ module Output
   def sub_lines(line, colors_array)
     colors_array.each do |color|
       line.sub!(/O|\$/, color)
+    end
+    line
+  end
+
+  def array_comparison(code, guess, i)
+    return '*' if code[i] == guess[i]
+
+    if code[i] != guess[i] && code.include?(guess[i])
+      return '+' unless guess.count(guess[i]) > code.count(code[i])
+    end
+  end
+
+  def sub_feedback(line, feedback_array)
+    feedback_array.shuffle.each do |feedback|
+      line.sub!('.', feedback)
     end
     line
   end
@@ -138,8 +159,9 @@ class Game
     while i < 12
       guess = breaker.make_guess
       sub_lines(lines[i], guess.colors)
+      sub_feedback(lines[i], maker.code.feedback(guess.colors))
       update_board(lines)
-      if guess.check_guess(maker.code)
+      if guess.check_guess?(maker.code)
         self.won = true
         show_code
         break
@@ -150,8 +172,13 @@ class Game
   end
 
   def show_code
-    sub_lines(lines.last, maker.code.colors) if won == true
-    update_board(lines)
+    if won == true
+      sub_lines(lines.last, maker.code.colors)
+      update_board(lines)
+      puts "*************************\n"\
+           "**YOU FOUND THE CODE!!!**\n"\
+           '*************************'
+    end
   end
 end
 
@@ -167,6 +194,7 @@ end
 
 class CodeMaker < Player
   attr_accessor :code
+
   def initialize(type)
     super
     @code = Code.new(type)
@@ -192,11 +220,12 @@ class Sequence
 
   def initialize(player_type)
     @colors = pick_colors(player_type)
-    pp @colors
   end
 end
 
 class Code < Sequence
+  attr_reader :code
+
   def initialize(player_type)
     if player_type == 'human'
       puts "************************\n"\
@@ -204,26 +233,33 @@ class Code < Sequence
            '************************'
     end
     super(player_type)
+    @code = colors
+  end
+
+  def feedback(guess)
+    feedback = []
+    i = 0
+    while i < code.length
+      feedback_value = array_comparison(code, guess, i)
+      feedback << feedback_value unless feedback_value.nil?
+      i += 1
+    end
+    feedback
   end
 end
 
 class Guess < Sequence
   def initialize(player_type)
     if player_type == 'human'
-    puts "*************************\n"\
-         "*****PICK YOUR GUESS*****\n"\
-         '*************************'
+      puts "*************************\n"\
+           "*****PICK YOUR GUESS*****\n"\
+           '*************************'
     end
     super(player_type)
   end
 
-  def check_guess(code)
-    if colors == code.colors
-      puts "*************************\n"\
-           "**YOU FOUND THE CODE!!!**\n"\
-           '*************************'
-      true
-    end
+  def check_guess?(code)
+    colors == code.colors
   end
 end
 
