@@ -69,27 +69,34 @@ module Output
   def show_possible_colors(line)
     case line
     when 1
-      puts ' Possible colors:'
+      ' Possible colors:'
     when (3..POSSIBLE_COLORS.length + 2)
-      puts " #{VALUES[line - 3]} -> #{KEYS[line - 3].capitalize} "
+      " #{VALUES[line - 3]} -> #{KEYS[line - 3].capitalize} "
     else
-      puts ''
+      ''
     end
   end
 
-  def show_board(lines=[])
+  def create_board
     line_template = '|. . | O  O  O  O | . .|'
+    lines = []
 
-    [*1..12].each do |line|
-      puts '|######################|' if line == 12
-      print line_template
-      show_possible_colors(line)
-      lines << line_template
+    [*1..14].each do |line|
+      current_line =  line == 13 ? '|######################|' : line_template + show_possible_colors(line)
+      puts current_line
+      lines << current_line
     end
     puts ''
 
     lines
   end
+
+  def update_board(lines)
+    lines.each do |line|
+      puts line
+    end
+  end
+
 end
 
 class Game
@@ -98,27 +105,24 @@ class Game
   attr_accessor :board, :lines, :maker, :breaker
 
   def initialize
-    @lines = show_board
+    @lines = create_board
   end
 
   def create_players
-    opponent = ask_type
-    player =
-      opponent == 'computer' ? 'human' : ask_type
-    role = ask_role
-    if role == 'codemaker'
-      @maker = CodeMaker.new(player)
-      @breaker = CodeBreaker.new(opponent)
+    player = ask_role
+    opponent_type = ask_type
+    if player == 'codemaker'
+      @maker = CodeMaker.new('human')
+      @breaker = CodeBreaker.new(opponent_type)
     else
-      @maker = CodeMaker.new(opponent)
-      @breaker = CodeBreaker.new(player)
+      @maker = CodeMaker.new(opponent_type)
+      @breaker = CodeBreaker.new('human')
     end
   end
 
   def set_code
-    maker.create_code
     lines.last.gsub!('O', '$')
-    show_board
+    update_board(lines)
   end
 end
 
@@ -135,9 +139,6 @@ end
 class CodeMaker < Player
   def initialize(type)
     super
-  end
-
-  def create_code
     @code = Code.new(type)
   end
 end
@@ -165,8 +166,8 @@ class Code < Sequence
       puts "************************\n"\
            "*****PICK YOUR CODE*****\n"\
            '************************'
-    super(player_type)
     end
+    super(player_type)
   end
 end
 
