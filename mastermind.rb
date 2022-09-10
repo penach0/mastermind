@@ -77,19 +77,74 @@ module Output
     end
   end
 
-  def show_board
+  def show_board(lines=[])
     line_template = '|. . | O  O  O  O | . .|'
-    lines = []
 
     [*1..12].each do |line|
       puts '|######################|' if line == 12
       print line_template
       show_possible_colors(line)
-      lines << [line_template]
+      lines << line_template
     end
     puts ''
 
     lines
+  end
+end
+
+class Game
+  include Input
+  include Output
+  attr_accessor :board, :lines, :maker, :breaker
+
+  def initialize
+    @lines = show_board
+  end
+
+  def create_players
+    opponent = ask_type
+    player =
+      opponent == 'computer' ? 'human' : ask_type
+    role = ask_role
+    if role == 'codemaker'
+      @maker = CodeMaker.new(player)
+      @breaker = CodeBreaker.new(opponent)
+    else
+      @maker = CodeMaker.new(opponent)
+      @breaker = CodeBreaker.new(player)
+    end
+  end
+
+  def set_code
+    maker.create_code
+    lines.last.gsub!('O', '$')
+    show_board
+  end
+end
+
+class Player
+  include Input
+  MAX_PLAYERS = 2
+  attr_reader :type
+
+  def initialize(type)
+    @type = type
+  end
+end
+
+class CodeMaker < Player
+  def initialize(type)
+    super
+  end
+
+  def create_code
+    @code = Code.new(type)
+  end
+end
+
+class CodeBreaker < Player
+  def initialize(type)
+    super
   end
 end
 
@@ -104,53 +159,14 @@ class Sequence
   end
 end
 
-class Player
-  include Input
-  MAX_PLAYERS = 2
-  attr_reader :type, :role
-
-  def initialize
-    @type = ask_type
-    @role = ask_role
-    initialize_role
-  end
-
-  def initialize_role
-    role == 'codemaker' ? CodeMaker.new(type) : CodeBreaker.new(type)
-  end
-end
-
-class CodeMaker < Player
-  def initialize(type)
-    @type = type
-  end
-
-  def create_code
-    @code = Code.new(self.type)
-  end
-
-class CodeBreaker < Player
-  def initialize(type)
-    @type = type
-  end
-end
-
-class Game
-  include Input
-  include Output
-  attr_accessor :board, :lines
-
-  def initialize
-    @lines = show_board
-  end
-end
-
 class Code < Sequence
   def initialize(player_type)
-    puts "************************\n"\
-         "*****PICK YOUR CODE*****\n"\
-         '************************'
+    if player_type == 'human'
+      puts "************************\n"\
+           "*****PICK YOUR CODE*****\n"\
+           '************************'
     super(player_type)
+    end
   end
 end
 
@@ -164,5 +180,5 @@ class Guess < Sequence
 end
 
 game = Game.new
-player1 = Player.new
-code = Code.new(player1.type)
+game.create_players
+game.set_code
