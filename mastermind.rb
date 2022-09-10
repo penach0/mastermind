@@ -95,11 +95,12 @@ module Output
     lines.each do |line|
       puts line
     end
+    puts ''
   end
 
-  def sub_guesses(line, guess_array)
-    guess_array.each do |color|
-      line.sub!('O', color)
+  def sub_lines(line, colors_array)
+    colors_array.each do |color|
+      line.sub!(/O|\$/, color)
     end
     line
   end
@@ -108,10 +109,11 @@ end
 class Game
   include Input
   include Output
-  attr_accessor :board, :lines, :maker, :breaker
+  attr_accessor :board, :lines, :maker, :breaker, :won
 
   def initialize
     @lines = create_board
+    @won = false
   end
 
   def create_players
@@ -134,10 +136,22 @@ class Game
   def guessing
     i = 0
     while i < 12
-      sub_guesses(lines[i], breaker.make_guess.colors)
+      guess = breaker.make_guess
+      sub_lines(lines[i], guess.colors)
       update_board(lines)
+      if guess.check_guess(maker.code)
+        self.won = true
+        show_code
+        break
+      end
       i += 1
     end
+    false
+  end
+
+  def show_code
+    sub_lines(lines.last, maker.code.colors) if won == true
+    update_board(lines)
   end
 end
 
@@ -152,6 +166,7 @@ class Player
 end
 
 class CodeMaker < Player
+  attr_accessor :code
   def initialize(type)
     super
     @code = Code.new(type)
@@ -200,6 +215,15 @@ class Guess < Sequence
          '*************************'
     end
     super(player_type)
+  end
+
+  def check_guess(code)
+    if colors == code.colors
+      puts "*************************\n"\
+           "**YOU FOUND THE CODE!!!**\n"\
+           '*************************'
+      true
+    end
   end
 end
 
