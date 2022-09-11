@@ -75,7 +75,7 @@ module Output
     when 10
       ' Feedback:'
     when 11
-      ' * -> Correct in both color and position'
+      ' = -> Correct in both color and position'
     when 12
       ' + -> Correct in color but wrong position'
     else
@@ -112,11 +112,29 @@ module Output
   end
 
   def array_comparison(code, guess, i)
-    return '*' if code[i] == guess[i]
+    return '=' if code[i] == guess[i]
 
-    if code[i] != guess[i] && code.include?(guess[i])
-      return '+' unless guess.count(guess[i]) > code.count(code[i])
+    return '+' if code[i] != guess[i] && code.include?(guess[i])
+  end
+
+  def count_ocurrences(array)
+    array.reduce({}) do |hash, item|
+      hash[item] ||= 0
+      hash[item] += 1
+      hash
     end
+  end
+
+  def compare_hash(hash1, hash2)
+    extra_plus = 0
+    hash1.each do |key1, value1|
+      hash2.each do |key2, value2|
+        next unless key2 == key1
+
+        extra_plus = value2 - value1 if value2 > value1
+      end
+    end
+    extra_plus
   end
 
   def sub_feedback(line, feedback_array)
@@ -124,6 +142,23 @@ module Output
       line.sub!('.', feedback)
     end
     line
+  end
+end
+
+module Computer
+  POSSIBLE_COLORS = { red: 'R', green: 'G', blue: 'B',
+                      yellow: 'Y', white: 'W', purple: 'P' }.freeze
+  KEYS = POSSIBLE_COLORS.keys
+  VALUES = POSSIBLE_COLORS.values
+
+  all_possibilities = []
+  VALUES.repeated_permutation(4) { |permutation| all_possibilities << permutation}
+
+  def first_guess
+    ['R','R','G','G']
+  end
+
+  def next_guess(feedback, guess)
   end
 end
 
@@ -242,6 +277,12 @@ class Code < Sequence
     while i < code.length
       feedback_value = array_comparison(code, guess, i)
       feedback << feedback_value unless feedback_value.nil?
+      i += 1
+    end
+    extra_plus = compare_hash(count_ocurrences(code), count_ocurrences(guess))
+    i = 0
+    while i < extra_plus
+      feedback.delete_at(feedback.index('+'))
       i += 1
     end
     feedback
